@@ -1,0 +1,18 @@
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+spring:
+  thymeleaf:
+    cache: false
+    prefix: classpath:/templates/
+    suffix: .html
+    encoding: UTF-8
+    mode: HTML5
+
+# 应用配置
+application:
+  name: SiC-Thickness-Measurement
+  version: 1.0.0
+  description: 碳化硅外延层红外多光束干涉测量系统

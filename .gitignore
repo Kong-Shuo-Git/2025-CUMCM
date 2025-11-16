@@ -1,0 +1,240 @@
+# 2025-CUMCM .gitignore
+# 2025年全国大学生数学建模竞赛项目忽略文件
+
+# ==================== Python相关 ====================
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Python虚拟环境
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Python IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# ==================== Java相关 ====================
+# Java编译文件
+*.class
+*.log
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Maven
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+dependency-reduced-pom.xml
+buildNumber.properties
+.mvn/timing.properties
+.mvn/wrapper/maven-wrapper.jar
+
+# Gradle
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE
+.idea/
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+# Eclipse
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# ==================== 操作系统相关 ====================
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.stackdump
+[Dd]esktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==================== 项目特定文件 ====================
+# 输出目录（保留.gitkeep）
+output/
+!output/.gitkeep
+
+# 日志文件
+*.log
+logs/
+
+# 临时文件
+tmp/
+temp/
+*.tmp
+*.temp
+
+# 数据文件（如果包含敏感数据）
+*.xlsx
+*.xls
+*.csv
+!附件1_processed.xlsx
+!附件2_processed.xlsx
+!附件3_processed.xlsx
+!附件4_processed.xlsx
+!附件3.xlsx
+!附件4.xlsx
+
+# 配置文件（如果包含敏感信息）
+config_local.yaml
+.env.local
+.env.production
+
+# ==================== 开发工具 ====================
+# Git
+.git
+.gitattributes
+.gitmodules
+
+# GitHub
+.github
+
+# 文档生成
+docs/_build/
+docs/build/
+
+# 测试覆盖率
+htmlcov/
+.coverage
+.coverage.*
+coverage.xml
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# ==================== 备份文件 ====================
+# 备份文件
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# 自动生成的备份
+*~
+.#*
+\#*#
+.*.swp
+.*.swo
+
+# ==================== 特定格式 ====================
+# PDF文件（除了重要的文档）
+*.pdf
+!代码.pdf
+!对碳化硅外延层厚度的红外多光束干涉分析.docx
+
+# 压缩文件
+*.zip
+*.rar
+*.7z
+*.tar
+*.tar.gz
+*.tar.bz2
+
+# ==================== 安全相关 ====================
+# 密钥文件
+*.key
+*.pem
+*.crt
+*.p12
+*.pfx
+
+# 配置文件中的敏感信息
+secrets.yaml
+secrets.json
+credentials.json

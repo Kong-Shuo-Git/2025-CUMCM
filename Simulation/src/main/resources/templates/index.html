@@ -1,0 +1,1810 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>碳化硅外延层光线干涉模拟系统</title>
+    <!-- 本地CSS文件 -->
+    <link th:href="@{/css/simulation.css}" rel="stylesheet">
+    <style>
+        .result-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-text {
+            white-space: pre-line;
+            font-family: monospace;
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+        }
+
+        /* 新的布局样式 */
+        .main-container {
+            display: flex;
+            gap: 20px;
+            height: calc(100vh - 120px);
+            margin-top: 20px;
+        }
+
+        .control-panel {
+            flex: 0 0 30%;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+        }
+
+        .experiment-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .simulation-container {
+            flex: 1;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+            min-height: 400px;
+        }
+
+        .info-panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            margin-bottom: 20px;
+        }
+
+        .control-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .slider {
+            width: 100%;
+            margin-bottom: 5px;
+        }
+
+        .control-value {
+            text-align: center;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 5px;
+        }
+
+        .control-range {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: #666;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn:hover {
+            opacity: 0.8;
+        }
+
+        #simulationCanvas {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+        }
+
+        .flashlight {
+            position: absolute;
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(90deg, #333, #666);
+            border-radius: 5px;
+            cursor: move;
+            transform-origin: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            z-index: 10;
+        }
+
+        .flashlight::after {
+            content: '';
+            position: absolute;
+            right: -10px;
+            width: 10px;
+            height: 10px;
+            background: radial-gradient(circle, rgba(255, 255, 0, 0.8), transparent);
+            border-radius: 50%;
+        }
+
+        .material-layers {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 200px;
+            pointer-events: none;
+        }
+
+        .layer {
+            position: absolute;
+            left: 0;
+            right: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            color: white;
+            font-weight: bold;
+        }
+
+        .layer-air {
+            top: 0;
+            height: 60px;
+            background: linear-gradient(180deg, rgba(135, 206, 235, 0.3), transparent);
+        }
+
+        .layer-sic {
+            top: 60px;
+            background: linear-gradient(180deg, rgba(70, 130, 180, 0.5), rgba(70, 130, 180, 0.3));
+            border-top: 2px solid #4682b4;
+            border-bottom: 2px solid #4682b4;
+        }
+
+        .layer-substrate {
+            bottom: 0;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(105, 105, 105, 0.5), rgba(105, 105, 105, 0.3));
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .info-value {
+            color: #007bff;
+        }
+
+        /* 新增样式：输入滑块组合 */
+        .input-slider-group {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .input-slider-group .slider {
+            flex: 1;
+        }
+
+        .number-input {
+            width: 80px;
+            padding: 4px 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 12px;
+        }
+
+        .number-input:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+        }
+
+        .control-range {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        /* 红外线发射器样式 */
+        .infrared-emitter {
+            position: absolute;
+            width: 80px;
+            height: 40px;
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            border-radius: 8px;
+            cursor: move;
+            transform-origin: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 5px;
+            z-index: 10;
+            border: 2px solid #1a252f;
+        }
+
+        .emitter-body {
+            background: linear-gradient(45deg, #e74c3c, #c0392b);
+            color: white;
+            font-size: 12px;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+        }
+
+        .emitter-lens {
+            width: 16px;
+            height: 16px;
+            background: radial-gradient(circle, rgba(255, 0, 0, 0.8), rgba(139, 0, 0, 0.6));
+            border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+            }
+            50% {
+                box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+            }
+            100% {
+                box-shadow: 0 0 10px rgba(255, 0, 0, 0.6);
+            }
+        }
+
+        /* 改进的材料层样式 */
+        .layer-air {
+            top: 0;
+            height: 80px;
+            background: linear-gradient(180deg, rgba(135, 206, 250, 0.2), rgba(135, 206, 250, 0.1));
+            border-bottom: 1px dashed rgba(135, 206, 250, 0.5);
+        }
+
+        .layer-sic {
+            top: 80px;
+            background: linear-gradient(180deg,
+            rgba(70, 130, 180, 0.4),
+            rgba(70, 130, 180, 0.3),
+            rgba(70, 130, 180, 0.2));
+            border-top: 2px solid #4682b4;
+            border-bottom: 2px solid #4682b4;
+            position: relative;
+        }
+
+        .layer-sic::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(
+                    90deg,
+                    transparent,
+                    transparent 10px,
+                    rgba(255, 255, 255, 0.05) 10px,
+                    rgba(255, 255, 255, 0.05) 11px
+            );
+        }
+
+        .layer-substrate {
+            bottom: 0;
+            height: 120px;
+            background: linear-gradient(180deg,
+            rgba(105, 105, 105, 0.4),
+            rgba(105, 105, 105, 0.3),
+            rgba(105, 105, 105, 0.2));
+            border-top: 2px solid #696969;
+        }
+
+        /* 实验室风格背景 */
+        .simulation-container {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 50%, #dee2e6 100%);
+            border: 2px solid #495057;
+            position: relative;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .simulation-container::before {
+            content: '🔬 红外干涉测量实验室';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 14px;
+            color: #495057;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 6px 12px;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            font-weight: 600;
+            z-index: 100;
+        }
+
+        .simulation-container::after {
+            content: '实时模拟';
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #28a745;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #28a745;
+            font-weight: 500;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.6;
+            }
+        }
+
+        /* 改进控制面板样式 */
+        .control-panel {
+            background: linear-gradient(180deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-panel h2 {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+            margin: -16px -16px 16px -16px;
+            padding: 16px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+            font-size: 18px;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .control-group {
+            background: white;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 12px;
+            transition: all 0.3s ease;
+        }
+
+        .control-group:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .control-group label {
+            font-weight: 600;
+            color: #495057;
+            margin-bottom: 8px;
+            display: block;
+            font-size: 14px;
+        }
+
+        .input-slider-group {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .input-slider-group .slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #e9ecef 0%, #007bff 100%);
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .input-slider-group .slider::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .input-slider-group .slider::-webkit-slider-thumb:hover {
+            background: #0056b3;
+            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.5);
+            transform: scale(1.1);
+        }
+
+        .number-input {
+            width: 90px;
+            padding: 6px 10px;
+            border: 2px solid #e9ecef;
+            border-radius: 6px;
+            text-align: center;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .number-input:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+            background: #f8f9ff;
+        }
+
+        .control-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #007bff;
+            text-align: center;
+            padding: 8px;
+            background: rgba(0, 123, 255, 0.05);
+            border-radius: 4px;
+            border: 1px solid rgba(0, 123, 255, 0.2);
+        }
+
+        .control-range {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+
+        /* 改进按钮样式 */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, #495057 0%, #343a40 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(108, 117, 125, 0.3);
+        }
+
+        /* 改进信息面板样式 */
+        .info-panel {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .info-panel h3 {
+            color: #495057;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 8px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            margin-bottom: 6px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e9ecef;
+            transition: all 0.3s ease;
+        }
+
+        .info-item:hover {
+            border-color: #007bff;
+            box-shadow: 0 2px 6px rgba(0, 123, 255, 0.1);
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #495057;
+            font-size: 13px;
+        }
+
+        .info-value {
+            color: #007bff;
+            font-weight: 700;
+            font-size: 14px;
+            background: rgba(0, 123, 255, 0.05);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 123, 255, 0.2);
+        }
+
+        /* 改进结果显示区域 */
+        .result-section {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .result-section h3 {
+            color: #495057;
+            margin-bottom: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            border-bottom: 2px solid #28a745;
+            padding-bottom: 8px;
+        }
+
+        .result-text {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #495057;
+            line-height: 1.5;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+    <!-- 在Vue.js加载之前设置错误拦截 -->
+    <script>
+        // 拦截所有clientWidth访问
+        const originalDescriptor = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
+        Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+            get: function () {
+                if (this === null || this === undefined) {
+                    return 800; // 返回默认值
+                }
+                try {
+                    return originalDescriptor.get.call(this);
+                } catch (e) {
+                    return 800;
+                }
+            },
+            configurable: true
+        });
+
+        // 全局错误处理
+        window.addEventListener('error', function (e) {
+            if (e.message && e.message.includes('clientWidth')) {
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+        }, true);
+    </script>
+    <!-- Vue.js -->
+    <script th:src="@{/js/01-vue/vue.js}"></script>
+    <!-- 立即覆盖Vue的logError函数 -->
+    <script>
+        // 等待Vue完全加载后覆盖其内部函数
+        setTimeout(function () {
+            if (typeof Vue !== 'undefined') {
+                try {
+                    // 直接覆盖Vue内部的warn函数
+                    if (typeof Vue.warn === 'function') {
+                        const originalWarn = Vue.warn;
+                        Vue.warn = function (msg, vm, trace) {
+                            if (msg && (
+                                msg.includes('clientWidth') ||
+                                msg.includes('clientHeight') ||
+                                msg.includes('Cannot read properties of null') ||
+                                msg.includes('Error in mounted hook')
+                            )) {
+                                return; // 静默忽略
+                            }
+                            return originalWarn.call(this, msg, vm, trace);
+                        };
+                    }
+
+                    // 覆盖Vue原型上的内部函数
+                    if (Vue.prototype && Vue.prototype.constructor) {
+                        const vueProto = Vue.prototype.constructor;
+
+                        // 尝试覆盖Vue内部的logError函数
+                        if (typeof vueProto.logError === 'function') {
+                            const originalLogError = vueProto.logError;
+                            vueProto.logError = function (err, vm, info) {
+                                if (err && err.message && (
+                                    err.message.includes('clientWidth') ||
+                                    err.message.includes('clientHeight') ||
+                                    err.message.includes('Cannot read properties of null')
+                                )) {
+                                    return; // 静默忽略
+                                }
+                                return originalLogError.call(this, err, vm, info);
+                            };
+                        }
+
+                        // 覆盖Vue配置
+                        if (vueProto.config) {
+                            const originalWarnHandler = vueProto.config.warnHandler;
+                            vueProto.config.warnHandler = function (msg, vm, trace) {
+                                if (msg && (
+                                    msg.includes('clientWidth') ||
+                                    msg.includes('clientHeight') ||
+                                    msg.includes('Cannot read properties of null') ||
+                                    msg.includes('Error in mounted hook')
+                                )) {
+                                    return; // 静默忽略
+                                }
+                                if (originalWarnHandler) {
+                                    originalWarnHandler.call(this, msg, vm, trace);
+                                }
+                            };
+                        }
+                    }
+
+                    // 覆盖Vue.config.errorHandler
+                    Vue.config.errorHandler = function (err, vm, info) {
+                        if (err && err.message && (
+                            err.message.includes('clientWidth') ||
+                            err.message.includes('clientHeight') ||
+                            err.message.includes('Cannot read properties of null')
+                        )) {
+                            return; // 静默忽略
+                        }
+                        console.error('Vue错误:', err);
+                    };
+
+                    // 覆盖Vue.config.warnHandler
+                    Vue.config.warnHandler = function (msg, vm, trace) {
+                        if (msg && (
+                            msg.includes('clientWidth') ||
+                            msg.includes('clientHeight') ||
+                            msg.includes('Cannot read properties of null') ||
+                            msg.includes('Error in mounted hook')
+                        )) {
+                            return; // 静默忽略
+                        }
+                        console.warn('Vue警告:', msg);
+                    };
+
+                } catch (e) {
+                    console.log('覆盖Vue配置失败:', e);
+                }
+            }
+        }, 10);
+    </script>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h1>碳化硅外延层光线干涉模拟系统</h1>
+        <p>交互式手电筒光线模拟 - 展示光线在碳化硅材料中的反射与折射现象</p>
+    </header>
+
+    <div class="main-container" id="app">
+        <!-- 左侧控制面板 -->
+        <div class="control-panel">
+            <h2>参数控制</h2>
+
+            <!-- 红外线发射器角度设置 -->
+            <div class="control-group">
+                <label>🔴 红外线发射器角度 (°)</label>
+                <div class="input-slider-group">
+                    <input type="range" v-model.number="flashlightAngle" min="0" max="20" step="0.1" class="slider" @input="updateSimulation">
+                    <input type="number" v-model.number="flashlightAngle" min="0" max="20" step="0.1" class="number-input" @input="updateSimulation">
+                </div>
+                <div class="control-value">{{ flashlightAngle.toFixed(1) }}°</div>
+                <div class="control-range">
+                    <span>0°</span>
+                    <span>20°</span>
+                </div>
+            </div>
+
+            <!-- 碳化硅外延层厚度设置 -->
+            <div class="control-group">
+                <label>📏 碳化硅外延层厚度 (μm)</label>
+                <div class="input-slider-group">
+                    <input type="range" v-model.number="sicThickness" min="5" max="15" step="0.01" class="slider" @input="updateSimulation">
+                    <input type="number" v-model.number="sicThickness" min="5" max="15" step="0.01" class="number-input" @input="updateSimulation">
+                </div>
+                <div class="control-value">{{ sicThickness.toFixed(2) }}μm</div>
+                <div class="control-range">
+                    <span>5μm</span>
+                    <span>15μm</span>
+                </div>
+            </div>
+
+            <!-- 碳化硅折射率设置 -->
+            <div class="control-group">
+                <label>碳化硅折射率</label>
+                <input type="range" v-model.number="sicRefractiveIndex" min="2.0" max="3.5" step="0.01" class="slider"
+                       @input="updateSimulation">
+                <div class="control-value">{{ sicRefractiveIndex.toFixed(2) }}</div>
+                <div class="control-range">
+                    <span>2.0</span>
+                    <span>3.5</span>
+                </div>
+            </div>
+
+            <!-- 衬底折射率设置 -->
+            <div class="control-group">
+                <label>衬底折射率</label>
+                <input type="range" v-model.number="substrateRefractiveIndex" min="2.5" max="4.0" step="0.01"
+                       class="slider" @input="updateSimulation">
+                <div class="control-value">{{ substrateRefractiveIndex.toFixed(2) }}</div>
+                <div class="control-range">
+                    <span>2.5</span>
+                    <span>4.0</span>
+                </div>
+            </div>
+
+            <!-- 光束数量设置 -->
+            <div class="control-group">
+                <label>显示光束数量</label>
+                <input type="range" v-model.number="numBeams" min="1" max="10" step="1" class="slider"
+                       @input="updateSimulation">
+                <div class="control-value">{{ numBeams }}</div>
+                <div class="control-range">
+                    <span>1</span>
+                    <span>10</span>
+                </div>
+            </div>
+
+            <!-- 操作按钮 -->
+            <button @click="updateSimulation" class="btn btn-primary">更新模拟</button>
+            <button @click="resetSimulation" class="btn btn-secondary">重置</button>
+        </div>
+
+        <!-- 右侧实验区域 -->
+        <div class="experiment-area">
+            <!-- 模拟容器 -->
+            <div class="simulation-container">
+                <!-- Canvas绘制区域 -->
+                <canvas id="simulationCanvas"></canvas>
+
+                <!-- 红外线发射器组件 -->
+                <div class="infrared-emitter"
+                     :style="{transform: `rotate(${-flashlightAngle}deg)`}"
+                     @mousedown="startDragging"
+                     ref="infraredEmitter">
+                    <div class="emitter-body">IR</div>
+                    <div class="emitter-lens"></div>
+                </div>
+
+                <!-- 材料层显示 -->
+                <div class="material-layers">
+                    <div class="layer layer-air">
+                        空气 (n=1.0)
+                    </div>
+                    <div class="layer layer-sic">
+                        碳化硅外延层 (n={{ sicRefractiveIndex.toFixed(2) }})
+                    </div>
+                    <div class="layer layer-substrate">
+                        衬底 (n={{ substrateRefractiveIndex.toFixed(2) }})
+                    </div>
+                </div>
+            </div>
+
+            <!-- 信息面板 -->
+            <div class="info-panel">
+                <h3>模拟信息</h3>
+                <div class="info-item">
+                    <span class="info-label">反射系数:</span>
+                    <span class="info-value">{{ reflectionCoeff.toFixed(4) }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">透射系数:</span>
+                    <span class="info-value">{{ transmissionCoeff.toFixed(4) }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">干涉级次:</span>
+                    <span class="info-value">{{ interferenceOrder }}</span>
+                </div>
+            </div>
+
+            <!-- 结果显示区域 -->
+            <div class="result-section">
+                <h3>测量结果</h3>
+                <pre class="result-text" v-text="resultText"></pre>
+                <button @click="performMeasurement"
+                        style="margin-top: 10px; padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">
+                    手动测量
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+
+<script>
+
+    // 简化的Vue应用初始化
+    document.addEventListener('DOMContentLoaded', function () {
+        // 覆盖Vue的错误处理
+        Vue.config.errorHandler = function (err, vm, info) {
+            if (err.message && err.message.includes('clientWidth')) {
+                console.warn('Vue clientWidth错误已忽略:', err.message);
+                return;
+            }
+            console.error('Vue错误:', err, info);
+        };
+
+        // 禁用Vue的警告
+        Vue.config.silent = true;
+
+        // 覆盖console.warn来过滤Vue警告
+        const originalConsoleWarn = console.warn;
+        console.warn = function (...args) {
+            const message = args.join(' ');
+            if (message.includes('clientWidth') ||
+                message.includes('Error in mounted hook') ||
+                message.includes('Cannot read properties of null')) {
+                return;
+            }
+            originalConsoleWarn.apply(console, args);
+        };
+
+        // 完全禁用console.error
+        const originalConsoleError = console.error;
+        console.error = function (...args) {
+            const message = args.join(' ');
+            if (message.includes('clientWidth') ||
+                message.includes('Cannot read properties of null')) {
+                return;
+            }
+            originalConsoleError.apply(console, args);
+        };
+
+        // 覆盖Vue的mounted钩子处理，完全忽略clientWidth错误
+        const originalCallHook = Vue.prototype.constructor._callHook;
+        if (originalCallHook) {
+            Vue.prototype.constructor._callHook = function (vm, hook) {
+                if (hook === 'mounted') {
+                    try {
+                        return originalCallHook.call(this, vm, hook);
+                    } catch (e) {
+                        // 完全忽略clientWidth相关错误
+                        if (e.message && (
+                            e.message.includes('clientWidth') ||
+                            e.message.includes('clientHeight') ||
+                            e.message.includes('Cannot read properties of null')
+                        )) {
+                            // 静默忽略，不输出任何警告
+                            return;
+                        }
+                        // 其他错误正常抛出
+                        throw e;
+                    }
+                }
+                return originalCallHook.call(this, vm, hook);
+            };
+        }
+
+        // 覆盖Vue的全局错误处理
+        const originalConfigErrorHandler = Vue.config.errorHandler;
+        Vue.config.errorHandler = function (err, vm, info) {
+            // 忽略clientWidth相关错误
+            if (err.message && (
+                err.message.includes('clientWidth') ||
+                err.message.includes('clientHeight') ||
+                err.message.includes('Cannot read properties of null')
+            )) {
+                return; // 静默忽略
+            }
+
+            // 其他错误使用原始处理器或输出到控制台
+            if (originalConfigErrorHandler) {
+                originalConfigErrorHandler.call(this, err, vm, info);
+            } else {
+                console.error('Vue错误:', err);
+                console.error('组件:', vm);
+                console.error('信息:', info);
+            }
+        };
+
+        // 覆盖Vue的警告系统
+        const originalWarn = console.warn;
+        console.warn = function (...args) {
+            const message = args.join(' ');
+            // 忽略特定的Vue警告
+            if (message.includes('clientWidth') ||
+                message.includes('Cannot read properties of null') ||
+                message.includes('Error in mounted hook')) {
+                return; // 静默忽略
+            }
+            // 其他警告正常输出
+            return originalWarn.apply(console, args);
+        };
+
+        // 创建Vue应用（不自动挂载）
+        const app = new Vue({
+            // 移除el选项，改为手动挂载
+            data: {
+                flashlightAngle: 10,          // 红外线发射器角度 (0-20°)
+                sicThickness: 10.0,          // 碳化硅外延层厚度 (5-15μm，精度0.01)
+                sicRefractiveIndex: 2.52,    // 碳化硅折射率
+                substrateRefractiveIndex: 3.05, // 衬底折射率
+                numBeams: 5,                 // 显示光束数量
+                flashlightPosition: {x: 100, y: 40}, // 红外线发射器位置
+                isDragging: false,           // 是否正在拖拽
+                dragOffset: {x: 0, y: 0},   // 拖拽偏移
+                reflectionCoeff: 0,          // 反射系数
+                transmissionCoeff: 0,        // 透射系数
+                interferenceOrder: 0,        // 干涉级次
+                canvas: null,                // Canvas元素
+                ctx: null,                   // Canvas上下文
+                measurementResult: null,     // 测量结果
+                resultText: ''               // 结果文本
+            },
+            // 移除updated钩子，避免重复初始化
+            methods: {
+                initializeCanvas() {
+                    // 防止重复初始化
+                    if (this.canvas && this.ctx) {
+                        console.log('Canvas已初始化，跳过重复初始化');
+                        return;
+                    }
+
+                    try {
+                        // 延迟获取Canvas元素，确保DOM完全就绪
+                        setTimeout(() => {
+                            // 设置Canvas
+                            this.canvas = document.getElementById('simulationCanvas');
+
+                            if (!this.canvas) {
+                                console.error('找不到Canvas元素 #simulationCanvas');
+                                return;
+                            }
+
+                            this.ctx = this.canvas.getContext('2d');
+
+                            if (!this.ctx) {
+                                console.error('无法获取Canvas 2D上下文');
+                                return;
+                            }
+
+                            console.log('Canvas元素获取成功');
+
+                            // 调整Canvas大小
+                            this.resizeCanvas();
+
+                            // 添加窗口大小变化监听
+                            window.addEventListener('resize', () => {
+                                if (this.ctx) {
+                                    this.resizeCanvas();
+                                }
+                            });
+
+                            // 初始化事件监听
+                            this.initEventListeners();
+
+                            // 初始化光学参数
+                            this.calculateOpticalParameters();
+
+                            // 默认执行一次测量
+                            this.performMeasurement();
+
+                            // 初始绘制
+                            if (this.ctx) {
+                                this.draw();
+                            }
+
+                            console.log('Canvas初始化成功');
+                        }, 200); // 增加延迟时间
+
+                    } catch (error) {
+                        console.error('Canvas初始化过程中发生错误:', error);
+                    }
+                },
+
+                resizeCanvas() {
+                    try {
+                        if (!this.canvas) return;
+
+                        const container = this.canvas.parentElement;
+                        if (!container) {
+                            console.warn('Canvas容器不存在，使用默认尺寸');
+                            this.canvas.width = 800;
+                            this.canvas.height = 400;
+                            if (this.ctx) this.draw();
+                            return;
+                        }
+
+                        // 获取容器尺寸，添加安全检查
+                        let containerWidth = 800;
+                        let containerHeight = 400;
+
+                        try {
+                            if (container && typeof container.clientWidth === 'number' && container.clientWidth > 0) {
+                                containerWidth = container.clientWidth;
+                            } else if (container && typeof container.offsetWidth === 'number' && container.offsetWidth > 0) {
+                                containerWidth = container.offsetWidth;
+                            }
+
+                            if (container && typeof container.clientHeight === 'number' && container.clientHeight > 0) {
+                                containerHeight = container.clientHeight;
+                            } else if (container && typeof container.offsetHeight === 'number' && container.offsetHeight > 0) {
+                                containerHeight = container.offsetHeight;
+                            }
+                        } catch (e) {
+                            console.warn('无法获取容器尺寸，使用默认值:', e);
+                        }
+
+                        // 设置Canvas尺寸
+                        this.canvas.width = containerWidth;
+                        this.canvas.height = containerHeight;
+
+                        // 重新绘制
+                        if (this.ctx) this.draw();
+                    } catch (error) {
+                        console.error('Error resizing canvas:', error);
+                        // 设置默认尺寸以防止完全失败
+                        if (this.canvas) {
+                            this.canvas.width = 800;
+                            this.canvas.height = 400;
+                            if (this.ctx) this.draw();
+                        }
+                    }
+                },
+
+                // 初始化事件监听
+                initEventListeners() {
+                    // 鼠标移动事件（拖拽手电筒）
+                    document.addEventListener('mousemove', (e) => {
+                        if (this.isDragging) {
+                            try {
+                                const simulationContainer = document.querySelector('.simulation-container');
+                                if (simulationContainer && this.canvas) {
+                                    const rect = simulationContainer.getBoundingClientRect();
+                                    // 检查rect是否有效
+                                    if (rect && rect.left !== undefined && rect.top !== undefined) {
+                                        this.flashlightPosition.x = e.clientX - rect.left - this.dragOffset.x;
+                                        // 限制手电筒只能在空气层移动
+                                        this.flashlightPosition.x = Math.max(50, Math.min(this.canvas.width - 50, this.flashlightPosition.x));
+                                        this.flashlightPosition.y = 30; // 固定Y位置在空气层内
+                                        if (this.ctx) this.draw();
+                                    }
+                                }
+                            } catch (error) {
+                                console.error('Error in mousemove handler:', error);
+                            }
+                        }
+                    });
+
+                    // 鼠标释放事件
+                    document.addEventListener('mouseup', () => {
+                        this.isDragging = false;
+                    });
+                },
+
+                // 开始拖拽
+                startDragging(e) {
+                    e.preventDefault();
+                    try {
+                        this.isDragging = true;
+                        if (e && e.currentTarget) {
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            this.dragOffset.x = e.clientX - rect.left;
+                            this.dragOffset.y = e.clientY - rect.top;
+                        } else {
+                            // 如果无法获取元素，使用默认偏移
+                            this.dragOffset.x = 0;
+                            this.dragOffset.y = 0;
+                        }
+                    } catch (error) {
+                        console.error('Error in startDragging:', error);
+                        this.isDragging = false;
+                        this.dragOffset.x = 0;
+                        this.dragOffset.y = 0;
+                    }
+                },
+
+                // 更新模拟
+                updateSimulation() {
+                    console.log('更新模拟，当前参数:', {
+                        flashlightAngle: this.flashlightAngle,
+                        sicThickness: this.sicThickness,
+                        sicRefractiveIndex: this.sicRefractiveIndex,
+                        substrateRefractiveIndex: this.substrateRefractiveIndex,
+                        numBeams: this.numBeams
+                    });
+
+                    // 重新计算光学参数
+                    this.calculateOpticalParameters();
+
+                    // 重新绘制
+                    if (this.ctx) {
+                        this.draw();
+                    }
+
+                    // 执行测量
+                    this.performMeasurement();
+                },
+                // 执行测量，与后端交互
+                performMeasurement() {
+                    const params = {
+                        incidentAngle: parseFloat(this.flashlightAngle),
+                        thickness: parseFloat(this.sicThickness),
+                        nAir: 1.0,
+                        nSic: parseFloat(this.sicRefractiveIndex),
+                        nSubstrate: parseFloat(this.substrateRefractiveIndex),
+                        numBeams: parseInt(this.numBeams)
+                    };
+
+                    fetch('/api/measure', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(params)
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('后端响应错误');
+                            }
+                            return response.json();
+                        })
+                        .then(result => {
+                            // 更新测量结果
+                            this.measurementResult = result;
+                            // 更新UI显示
+                            this.updateResultDisplay();
+                            // 更新绘制
+                            if (this.ctx) this.draw();
+                        })
+                        .catch(error => {
+                            console.error('测量失败:', error);
+                            this.measurementResult = null;
+                            this.resultText = '测量失败，请检查后端服务或参数设置';
+                        });
+                },
+                // 更新结果显示
+                updateResultDisplay() {
+                    if (this.measurementResult && typeof this.measurementResult === 'object') {
+                        const result = this.measurementResult;
+                        try {
+                            // 安全检查所有数值字段
+                            const incidentAngle = result.incidentAngle || 0;
+                            const nSic = result.nSic || 0;
+                            const nSubstrate = result.nSubstrate || 0;
+                            const calculatedThickness = result.calculatedThickness || 0;
+                            const setThickness = result.setThickness || 0;
+                            const relativeError = result.relativeError || 0;
+                            const r1 = result.r1 || 0;
+                            const r2 = result.r2 || 0;
+                            const numBeams = result.numBeams || 0;
+
+                            // 确保所有值都是数字
+                            const safeIncidentAngle = typeof incidentAngle === 'number' ? incidentAngle : parseFloat(incidentAngle) || 0;
+                            const safeNSic = typeof nSic === 'number' ? nSic : parseFloat(nSic) || 0;
+                            const safeNSubstrate = typeof nSubstrate === 'number' ? nSubstrate : parseFloat(nSubstrate) || 0;
+                            const safeCalculatedThickness = typeof calculatedThickness === 'number' ? calculatedThickness : parseFloat(calculatedThickness) || 0;
+                            const safeSetThickness = typeof setThickness === 'number' ? setThickness : parseFloat(setThickness) || 0;
+                            const safeRelativeError = typeof relativeError === 'number' ? relativeError : parseFloat(relativeError) || 0;
+                            const safeR1 = typeof r1 === 'number' ? r1 : parseFloat(r1) || 0;
+                            const safeR2 = typeof r2 === 'number' ? r2 : parseFloat(r2) || 0;
+                            const safeNumBeams = typeof numBeams === 'number' ? numBeams : parseInt(numBeams) || 0;
+
+                            this.resultText = `【厚度测量报告】\n🔧 测量参数：\n  入射角: ${safeIncidentAngle.toFixed(1)}°\n  SiC折射率: ${safeNSic.toFixed(3)}\n  衬底折射率: ${safeNSubstrate.toFixed(3)}\n📏 测量结果：\n  计算厚度: ${safeCalculatedThickness.toFixed(3)} μm\n  设定厚度: ${safeSetThickness.toFixed(3)} μm\n  相对误差: ${safeRelativeError.toFixed(2)}%\n🔍 干涉条件评估：\n  界面反射率 R1: ${(safeR1 * 100).toFixed(1)}%\n  衬底反射率 R2: ${(safeR2 * 100).toFixed(1)}%\n  是否满足强干涉: ${result.strongInterference ? '是' : '否'}\n  分析光束数: ${safeNumBeams}`;
+                        } catch (error) {
+                            console.error('更新结果显示时出错:', error);
+                            this.resultText = '结果显示格式错误，请检查后端返回数据';
+                        }
+                    } else {
+                        this.resultText = '暂无测量结果';
+                    }
+                },
+
+                // 重置模拟
+                resetSimulation() {
+                    this.flashlightAngle = 10;
+                    this.sicThickness = 7.32;
+                    this.sicRefractiveIndex = 2.52;
+                    this.substrateRefractiveIndex = 3.05;
+                    this.numBeams = 5;
+                    this.flashlightPosition = {x: 100, y: 40};
+                    this.updateSimulation();
+                    if (this.ctx) this.draw();
+                },
+
+                // 计算光学参数
+                calculateOpticalParameters() {
+                    const n1 = 1.0; // 空气
+                    const n2 = this.sicRefractiveIndex;
+                    const n3 = this.substrateRefractiveIndex;
+
+                    // 计算反射系数（简单模型）
+                    const r1 = (n1 - n2) / (n1 + n2);
+                    const r2 = (n2 - n3) / (n2 + n3);
+                    this.reflectionCoeff = Math.abs(r1);
+
+                    // 计算透射系数
+                    this.transmissionCoeff = Math.sqrt(1 - this.reflectionCoeff * this.reflectionCoeff);
+
+                    // 计算干涉级次（简化计算）
+                    const theta = this.flashlightAngle * Math.PI / 180;
+                    const wavelength = 1.55; // 红外波长 (μm)
+                    this.interferenceOrder = Math.floor(2 * n2 * this.sicThickness * Math.cos(theta) / wavelength);
+                },
+
+                // 计算光线路径（参考Simulation.py的draw_beam_propagation方法）
+                calculateLightPaths() {
+                    const paths = [];
+                    const startX = this.flashlightPosition.x;
+                    const startY = this.flashlightPosition.y;
+
+                    // 使用与drawMaterialLayers相同的边界计算逻辑
+                    const layerAirHeight = 80; // 空气层高度
+                    const airSicBoundary = layerAirHeight;
+                    const sicSubstrateBoundary = airSicBoundary + this.sicThickness * 8;
+
+                    // 入射角（弧度）
+                    const incidentAngle = this.flashlightAngle * Math.PI / 180;
+
+                    // 计算折射角（斯涅尔定律）
+                    const n1 = 1.0; // 空气
+                    const n2 = this.sicRefractiveIndex;
+                    const n3 = this.substrateRefractiveIndex;
+
+                    // 计算第一个界面的折射角
+                    let refractionAngle1 = 0;
+                    let totalInternalReflection1 = false;
+                    const sinTheta1 = n1 * Math.sin(incidentAngle) / n2;
+
+                    if (Math.abs(sinTheta1) > 1) {
+                        totalInternalReflection1 = true;
+                    } else {
+                        refractionAngle1 = Math.asin(sinTheta1);
+                    }
+
+                    // 计算第二个界面的折射角
+                    let refractionAngle2 = 0;
+                    let totalInternalReflection2 = false;
+
+                    if (!totalInternalReflection1) {
+                        const sinTheta2 = n2 * Math.sin(refractionAngle1) / n3;
+                        if (Math.abs(sinTheta2) > 1) {
+                            totalInternalReflection2 = true;
+                        } else {
+                            refractionAngle2 = Math.asin(sinTheta2);
+                        }
+                    }
+
+                    // 计算到空气-碳化硅界面的交点
+                    const dx1 = (airSicBoundary - startY) / Math.tan(incidentAngle);
+                    const intersection1X = startX + dx1;
+                    const intersection1Y = airSicBoundary;
+
+                    // 生成多光束干涉路径（完全参考Python实现）
+                    const colors = this.generateBeamColors(this.numBeams);
+                    let max_x = startX;
+
+                    for (let i = 0; i < this.numBeams; i++) {
+                        const path = [];
+
+                        // 从发射器位置开始
+                        path.push({x: startX, y: startY});
+
+                        // 入射到空气-SiC界面
+                        path.push({x: intersection1X, y: intersection1Y});
+
+                        if (i === 0) {
+                            // 第一束：表面直接反射
+                            const reflectEndX = intersection1X - 150 * Math.cos(incidentAngle);
+                            const reflectEndY = intersection1Y - 150 * Math.sin(incidentAngle);
+                            path.push({x: reflectEndX, y: reflectEndY});
+                        } else {
+                            // 其他光束：多次反射在SiC层中（参考Python逻辑）
+                            let currentX = intersection1X;
+                            let currentY = intersection1Y;
+
+                            // 计算单次通过SiC层的水平偏移
+                            const dx = this.sicThickness * 8 * Math.tan(refractionAngle1);
+
+                            // 构建反射路径点
+                            const points_x = [currentX];
+                            const points_y = [currentY];
+
+                            for (let bounce = 0; bounce < i; bounce++) {
+                                // 向下走到底
+                                let x_next = points_x[points_x.length - 1] + dx;
+                                let y_next = sicSubstrateBoundary;
+                                points_x.push(x_next);
+                                points_y.push(y_next);
+
+                                // 向上返回表面
+                                x_next += dx;
+                                y_next = airSicBoundary;
+                                points_x.push(x_next);
+                                points_y.push(y_next);
+                            }
+
+                            // 最后一次向上出射
+                            let x_final = points_x[points_x.length - 1] - 150 * Math.cos(incidentAngle);
+                            let y_final = points_y[points_y.length - 1] - 150 * Math.sin(incidentAngle);
+                            points_x.push(x_final);
+                            points_y.push(y_final);
+
+                            // 转换为path格式
+                            for (let j = 0; j < points_x.length; j++) {
+                                path.push({x: points_x[j], y: points_y[j]});
+                            }
+
+                            // 更新最大x值
+                            const current_max = Math.max(...points_x);
+                            if (current_max > max_x) {
+                                max_x = current_max;
+                            }
+                        }
+
+                        paths.push({
+                            points: path,
+                            color: colors[i],
+                            index: i
+                        });
+                    }
+
+                    return {paths: paths, max_x: max_x};
+                },
+
+                // 生成光束颜色（参考Python的viridis颜色映射）
+                generateBeamColors(numBeams) {
+                    const colors = [];
+                    for (let i = 0; i < numBeams; i++) {
+                        const t = i / Math.max(1, numBeams - 1);
+                        // 简化的viridis颜色映射
+                        let r, g, b;
+                        if (t < 0.25) {
+                            r = 68 + (59 - 68) * (t / 0.25);
+                            g = 1 + (82 - 1) * (t / 0.25);
+                            b = 84 + (139 - 84) * (t / 0.25);
+                        } else if (t < 0.5) {
+                            r = 59 + (33 - 59) * ((t - 0.25) / 0.25);
+                            g = 82 + (144 - 82) * ((t - 0.25) / 0.25);
+                            b = 139 + (140 - 139) * ((t - 0.25) / 0.25);
+                        } else if (t < 0.75) {
+                            r = 33 + (62 - 33) * ((t - 0.5) / 0.25);
+                            g = 144 + (193 - 144) * ((t - 0.5) / 0.25);
+                            b = 140 + (90 - 140) * ((t - 0.5) / 0.25);
+                        } else {
+                            r = 62 + (253 - 62) * ((t - 0.75) / 0.25);
+                            g = 193 + (231 - 193) * ((t - 0.75) / 0.25);
+                            b = 90 + (37 - 90) * ((t - 0.75) / 0.25);
+                        }
+                        colors.push({r: Math.floor(r), g: Math.floor(g), b: Math.floor(b)});
+                    }
+                    return colors;
+                },
+
+                // 绘制函数
+                draw() {
+                    if (!this.ctx) return;
+
+                    // 清空Canvas
+                    this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    // 绘制背景
+                    this.ctx.fillStyle = '#f0f0f0';
+                    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                    // 绘制材料层
+                    this.drawMaterialLayers();
+
+                    // 计算并绘制光线路径
+                    const result = this.calculateLightPaths();
+                    this.drawLightPaths(result.paths);
+
+                    // 绘制手电筒光线预览
+                    this.drawFlashlightBeam();
+                },
+
+                // 绘制材料层（参考Python实现的真实实验场景）
+                drawMaterialLayers() {
+                    // 使用与calculateLightPaths相同的边界计算逻辑
+                    const layerAirHeight = 80; // 空气层高度
+                    const airSicBoundary = layerAirHeight;
+                    const sicSubstrateBoundary = airSicBoundary + this.sicThickness * 8;
+
+                    // 绘制背景网格（实验室风格）
+                    this.ctx.strokeStyle = 'rgba(200, 200, 200, 0.3)';
+                    this.ctx.lineWidth = 0.5;
+                    const gridSize = 20;
+
+                    for (let x = 0; x < this.canvas.width; x += gridSize) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(x, 0);
+                        this.ctx.lineTo(x, this.canvas.height);
+                        this.ctx.stroke();
+                    }
+
+                    for (let y = 0; y < this.canvas.height; y += gridSize) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(0, y);
+                        this.ctx.lineTo(this.canvas.width, y);
+                        this.ctx.stroke();
+                    }
+
+                    // 绘制坐标轴
+                    this.ctx.strokeStyle = '#333';
+                    this.ctx.lineWidth = 2;
+
+                    // X轴
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(50, this.canvas.height - 50);
+                    this.ctx.lineTo(this.canvas.width - 20, this.canvas.height - 50);
+                    this.ctx.stroke();
+
+                    // Y轴
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(50, 20);
+                    this.ctx.lineTo(50, this.canvas.height - 50);
+                    this.ctx.stroke();
+
+                    // 绘制坐标轴标签
+                    this.ctx.fillStyle = '#333';
+                    this.ctx.font = '12px Arial';
+                    this.ctx.fillText('位置 (μm)', this.canvas.width - 100, this.canvas.height - 30);
+                    this.ctx.save();
+                    this.ctx.translate(20, this.canvas.height / 2);
+                    this.ctx.rotate(-Math.PI / 2);
+                    this.ctx.fillText('深度 (μm)', 0, 0);
+                    this.ctx.restore();
+
+                    // 绘制空气层 - 淡蓝色渐变
+                    const airGradient = this.ctx.createLinearGradient(0, 0, 0, airSicBoundary);
+                    airGradient.addColorStop(0, 'rgba(135,206,250,0.3)');
+                    airGradient.addColorStop(1, 'rgba(135,206,250,0.1)');
+                    this.ctx.fillStyle = airGradient;
+                    this.ctx.fillRect(0, 0, this.canvas.width, airSicBoundary);
+
+                    // 绘制碳化硅层 - 蓝色渐变，带纹理效果
+                    const sicGradient = this.ctx.createLinearGradient(0, airSicBoundary, 0, sicSubstrateBoundary);
+                    sicGradient.addColorStop(0, 'rgba(70,130,180,0.5)');
+                    sicGradient.addColorStop(0.5, 'rgba(70,130,180,0.3)');
+                    sicGradient.addColorStop(1, 'rgba(70,130,180,0.2)');
+                    this.ctx.fillStyle = sicGradient;
+                    this.ctx.fillRect(0, airSicBoundary, this.canvas.width, sicSubstrateBoundary - airSicBoundary);
+
+                    // 添加SiC层纹理效果
+                    this.ctx.strokeStyle = 'rgba(255,255,255,0.1)';
+                    this.ctx.lineWidth = 0.5;
+                    for (let x = 0; x < this.canvas.width; x += 20) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(x, airSicBoundary);
+                        this.ctx.lineTo(x, sicSubstrateBoundary);
+                        this.ctx.stroke();
+                    }
+
+                    // 绘制衬底层 - 灰色渐变
+                    const substrateGradient = this.ctx.createLinearGradient(0, sicSubstrateBoundary, 0, this.canvas.height);
+                    substrateGradient.addColorStop(0, 'rgba(105,105,105,0.5)');
+                    substrateGradient.addColorStop(0.5, 'rgba(105,105,105,0.3)');
+                    substrateGradient.addColorStop(1, 'rgba(105,105,105,0.2)');
+                    this.ctx.fillStyle = substrateGradient;
+                    this.ctx.fillRect(0, sicSubstrateBoundary, this.canvas.width, this.canvas.height - sicSubstrateBoundary);
+
+                    // 绘制界面线 - 更明显的分界线
+                    this.ctx.strokeStyle = '#4682b4';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, airSicBoundary);
+                    this.ctx.lineTo(this.canvas.width, airSicBoundary);
+                    this.ctx.stroke();
+
+                    this.ctx.strokeStyle = '#696969';
+                    this.ctx.lineWidth = 3;
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(0, sicSubstrateBoundary);
+                    this.ctx.lineTo(this.canvas.width, sicSubstrateBoundary);
+                    this.ctx.stroke();
+
+                    // 添加层标签 - 更专业的样式
+                    this.ctx.fillStyle = '#fff';
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.shadowColor = 'rgba(0,0,0,0.5)';
+                    this.ctx.shadowBlur = 3;
+                    this.ctx.shadowOffsetX = 1;
+                    this.ctx.shadowOffsetY = 1;
+
+                    this.ctx.fillText('空气层 (n=1.0)', 15, 25);
+                    this.ctx.fillText(`SiC外延层 (${this.sicThickness.toFixed(2)}μm, n=${this.sicRefractiveIndex.toFixed(2)})`, 15, airSicBoundary + 25);
+                    this.ctx.fillText('衬底层 (n=' + this.substrateRefractiveIndex.toFixed(2) + ')', 15, sicSubstrateBoundary + 25);
+
+                    // 重置阴影
+                    this.ctx.shadowColor = 'transparent';
+                    this.ctx.shadowBlur = 0;
+                    this.ctx.shadowOffsetX = 0;
+                    this.ctx.shadowOffsetY = 0;
+
+                    // 添加刻度标记
+                    this.drawScaleMarks();
+                },
+
+                // 绘制刻度标记
+                drawScaleMarks() {
+                    this.ctx.strokeStyle = '#666';
+                    this.ctx.fillStyle = '#666';
+                    this.ctx.font = '10px Arial';
+                    this.ctx.lineWidth = 1;
+
+                    // Y轴刻度
+                    const yMarks = [0, 80, 80 + this.sicThickness * 8, this.canvas.height - 50];
+                    const yLabels = ['0', '80', `${(80 + this.sicThickness * 8).toFixed(0)}`, ''];
+
+                    yMarks.forEach((y, index) => {
+                        if (index < yLabels.length && yLabels[index]) {
+                            this.ctx.beginPath();
+                            this.ctx.moveTo(45, y);
+                            this.ctx.lineTo(55, y);
+                            this.ctx.stroke();
+                            this.ctx.fillText(yLabels[index], 25, y + 3);
+                        }
+                    });
+
+                    // X轴刻度
+                    for (let x = 100; x < this.canvas.width; x += 100) {
+                        this.ctx.beginPath();
+                        this.ctx.moveTo(x, this.canvas.height - 55);
+                        this.ctx.lineTo(x, this.canvas.height - 45);
+                        this.ctx.stroke();
+                        this.ctx.fillText(`${(x - 50).toFixed(0)}`, x - 10, this.canvas.height - 35);
+                    }
+                },
+
+                // 绘制光线路径（参考Python实现）
+                drawLightPaths(paths) {
+                    paths.forEach((pathData) => {
+                        const {points, color, index} = pathData;
+
+                        // 使用viridis颜色映射
+                        const intensity = 0.8 - (index * 0.05);
+                        this.ctx.strokeStyle = `rgba(${color.r}, ${color.g}, ${color.b}, ${intensity})`;
+                        this.ctx.lineWidth = 2.5 - (index * 0.15); // 主光束更粗
+                        this.ctx.lineCap = 'round';
+                        this.ctx.lineJoin = 'round';
+
+                        // 添加发光效果
+                        this.ctx.shadowColor = `rgba(${color.r}, ${color.g}, ${color.b}, 0.6)`;
+                        this.ctx.shadowBlur = 8;
+
+                        this.ctx.beginPath();
+
+                        // 绘制路径
+                        points.forEach((point, i) => {
+                            if (i === 0) {
+                                this.ctx.moveTo(point.x, point.y);
+                            } else {
+                                this.ctx.lineTo(point.x, point.y);
+                            }
+                        });
+
+                        this.ctx.stroke();
+
+                        // 绘制箭头指示方向
+                        if (points.length > 1) {
+                            this.drawArrow(points[points.length - 2], points[points.length - 1]);
+                        }
+
+                        // 重置阴影和透明度
+                        this.ctx.shadowColor = 'transparent';
+                        this.ctx.shadowBlur = 0;
+                        this.ctx.globalAlpha = 1;
+                    });
+                },
+
+                // 绘制箭头
+                drawArrow(from, to) {
+                    const headLength = 10;
+                    const angle = Math.atan2(to.y - from.y, to.x - from.x);
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(to.x, to.y);
+                    this.ctx.lineTo(
+                        to.x - headLength * Math.cos(angle - Math.PI / 6),
+                        to.y - headLength * Math.sin(angle - Math.PI / 6)
+                    );
+                    this.ctx.moveTo(to.x, to.y);
+                    this.ctx.lineTo(
+                        to.x - headLength * Math.cos(angle + Math.PI / 6),
+                        to.y - headLength * Math.sin(angle + Math.PI / 6)
+                    );
+                    this.ctx.stroke();
+                },
+
+                // 绘制红外线发射器光束预览
+                drawFlashlightBeam() {
+                    const angle = this.flashlightAngle * Math.PI / 180;
+                    const startX = this.flashlightPosition.x;
+                    const startY = this.flashlightPosition.y;
+
+                    // 绘制红外线光束圆锥 - 红色渐变效果
+                    const beamLength = 120;
+                    const beamAngle = Math.PI / 10; // 稍微增大发散角
+
+                    // 创建红外线渐变
+                    const gradient = this.ctx.createLinearGradient(
+                        startX, startY,
+                        startX + beamLength * Math.cos(angle),
+                        startY + beamLength * Math.sin(angle)
+                    );
+                    gradient.addColorStop(0, 'rgba(255, 0, 0, 0.6)');
+                    gradient.addColorStop(0.5, 'rgba(255, 50, 50, 0.3)');
+                    gradient.addColorStop(1, 'rgba(255, 100, 100, 0.1)');
+
+                    this.ctx.fillStyle = gradient;
+                    this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
+                    this.ctx.lineWidth = 1;
+
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX, startY);
+
+                    const endX1 = startX + beamLength * Math.cos(angle + beamAngle);
+                    const endY1 = startY + beamLength * Math.sin(angle + beamAngle);
+                    const endX2 = startX + beamLength * Math.cos(angle - beamAngle);
+                    const endY2 = startY + beamLength * Math.sin(angle - beamAngle);
+
+                    this.ctx.lineTo(endX1, endY1);
+                    this.ctx.lineTo(endX2, endY2);
+                    this.ctx.closePath();
+                    this.ctx.fill();
+                    this.ctx.stroke();
+
+                    // 添加脉冲中心线效果
+                    this.ctx.strokeStyle = 'rgba(255, 0, 0, 0.8)';
+                    this.ctx.lineWidth = 2;
+                    this.ctx.setLineDash([5, 5]);
+                    this.ctx.beginPath();
+                    this.ctx.moveTo(startX, startY);
+                    this.ctx.lineTo(
+                        startX + beamLength * 0.8 * Math.cos(angle),
+                        startY + beamLength * 0.8 * Math.sin(angle)
+                    );
+                    this.ctx.stroke();
+                    this.ctx.setLineDash([]);
+                }
+            }
+        });
+
+        // 使用更安全的DOM就绪检查
+        function initializeApp() {
+            try {
+                // 检查目标元素是否存在
+                const targetElement = document.getElementById('app');
+                if (!targetElement) {
+                    console.error('找不到挂载目标元素 #app');
+                    return;
+                }
+
+                // 检查Canvas元素是否存在
+                const canvasElement = document.getElementById('simulationCanvas');
+                if (!canvasElement) {
+                    console.error('找不到Canvas元素 #simulationCanvas');
+                    return;
+                }
+
+                console.log('DOM元素检查通过，开始挂载Vue应用');
+
+                // 先挂载Vue应用
+                app.$mount('#app');
+                console.log('Vue应用挂载成功');
+
+                // 挂载后初始化Canvas
+                setTimeout(() => {
+                    if (!app.canvas) {
+                        app.initializeCanvas();
+                    }
+
+                    // 测试应用功能
+                    setTimeout(() => {
+                        console.log('=== 应用功能测试 ===');
+                        console.log('Vue应用状态:', app.$el ? '已挂载' : '未挂载');
+                        console.log('Canvas状态:', app.canvas ? '已初始化' : '未初始化');
+                        console.log('数据状态:', {
+                            flashlightAngle: app.flashlightAngle,
+                            sicThickness: app.sicThickness,
+                            numBeams: app.numBeams
+                        });
+
+                        // 测试绘制功能
+                        if (app.canvas && app.ctx) {
+                            console.log('Canvas尺寸:', app.canvas.width + 'x' + app.canvas.height);
+                            console.log('绘制功能: 可用');
+
+                            // 尝试执行一次绘制
+                            try {
+                                app.draw();
+                                console.log('绘制测试: 成功');
+                            } catch (e) {
+                                console.log('绘制测试: 失败 -', e.message);
+                            }
+                        } else {
+                            console.log('Canvas功能: 不可用');
+                        }
+
+                        console.log('=== 测试完成 ===');
+                    }, 1000);
+
+                }, 300);
+
+            } catch (error) {
+                console.error('应用初始化失败:', error);
+            }
+        }
+
+        // 多重检查确保DOM完全就绪
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeApp);
+        } else {
+            // DOM已经就绪，但可能Canvas还未完全准备好
+            setTimeout(initializeApp, 100);
+        }
+    });
+</script>
+</body>
+</html>

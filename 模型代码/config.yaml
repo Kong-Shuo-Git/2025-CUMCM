@@ -1,0 +1,131 @@
+# 项目配置文件
+# 2025数学建模竞赛 - 碳化硅外延层厚度分析配置
+
+# ==================== 材料物理参数 ====================
+materials:
+  SiC:
+    refractive_index: 2.55
+    name: "碳化硅"
+    wavelength_range: [2500, 5000]  # nm
+    thickness_range: [0.1, 100]     # μm
+    
+  Si:
+    refractive_index: 3.40
+    name: "硅" 
+    wavelength_range: [2000, 6000]  # nm
+    thickness_range: [3.0, 200]     # μm
+    
+  GaAs:
+    refractive_index: 3.30
+    name: "砷化镓"
+    wavelength_range: [2000, 6000]  # nm
+    thickness_range: [1.0, 100]     # μm
+
+# ==================== 折射率模型参数 ====================
+refractive_index_models:
+  cauchy:
+    SiC:
+      A: 2.65
+      B: 0.015
+      C: 1e-7
+      
+  sellmeier:
+    SiC:
+      A1: 6.91
+      B1: 0.202
+      
+  polynomial:
+    Si:
+      n_fixed: 3.40
+      B: 0.08
+      C_fixed: 0.0003
+      B_bounds: [0.075, 0.085]
+
+# ==================== 计算参数 ====================
+calculation:
+  # 极值点检测参数
+  peak_detection:
+    min_distance: 10
+    prominence: 0.05
+    height_factor_max: 0.2
+    height_factor_min: 0.8
+    
+  # 厚度计算参数
+  thickness:
+    min_valid_points: 50
+    wavelength_diff_threshold: 10  # nm
+    rsd_threshold: 30.0  # %
+    
+  # 拟合参数
+  fitting:
+    max_iterations: 500000
+    tolerance: 1e-15
+    smooth_window: 17
+    smooth_order: 2
+
+# ==================== 数据文件配置 ====================
+data_files:
+  problem2:
+    - "附件1_processed.xlsx"
+    - "附件2_processed.xlsx"
+    
+  problem3:
+    - "附件3_processed.xlsx"
+    - "附件4_processed.xlsx"
+    
+  problem4:
+    - "附件1_processed.xlsx"
+    - "附件2_processed.xlsx"
+
+# ==================== 输出配置 ====================
+output:
+  base_dir: "output"
+  subdirs:
+    - "images"
+    - "excel" 
+    - "txt"
+    - "stability"
+    - "灵敏度分析"
+    - "reports"
+    - "logs"
+    
+  # 图表配置
+  plot:
+    dpi: 300
+    figure_size: [12, 8]
+    font_size: 12
+    font_family: ["SimHei", "DejaVu Sans"]
+    
+# ==================== 灵敏度分析配置 ====================
+sensitivity_analysis:
+  problem2:
+    angle_variations: [8, 9, 10, 11, 12, 13, 14, 15, 16, 17]
+    
+  problem4:
+    angle_groups:
+      "附件1_processed.xlsx": [8, 9, 10, 11, 12]
+      "附件2_processed.xlsx": [13, 14, 15, 16, 17]
+
+# ==================== 质量控制参数 ====================
+quality_control:
+  # 数据质量要求
+  data_quality:
+    min_data_points: 50
+    max_missing_ratio: 0.05
+    
+  # 结果精度要求
+  accuracy:
+    rsd_single_lab: 1.0    # %
+    rsd_multi_lab: 2.0     # %
+    thickness_precision: 0.001  # μm
+    
+  # 异常值检测
+  outlier_detection:
+    method: "iqr"
+    factor: 1.5
+
+# ==================== 日志配置 ====================
+logging:
+  level: "INFO"
+  format: "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+  file: "output/logs/model_execution.log"

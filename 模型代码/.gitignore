@@ -1,0 +1,146 @@
+# 2025数学建模竞赛项目 - Git忽略文件
+
+# ==================== Python相关 ====================
+# Python缓存文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Python虚拟环境
+venv/
+env/
+ENV/
+.venv/
+.env/
+
+# Python分发和构建
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# ==================== IDE相关 ====================
+# PyCharm
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# ==================== 数据和结果文件 ====================
+# 输出目录（保留结构，忽略内容）
+output/
+!output/.gitkeep
+
+# 临时文件
+temp/
+tmp/
+*.tmp
+*.temp
+
+# 日志文件
+*.log
+logs/
+
+# ==================== 系统文件 ====================
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Linux
+*~
+.fuse_hidden*
+.directory
+.Trash-*
+.nfs*
+
+# ==================== 大文件和二进制文件 ====================
+# 大型数据文件（如果有的话）
+*.raw
+*.dat
+*.bin
+
+# 压缩文件
+*.zip
+*.rar
+*.7z
+*.tar.gz
+*.tar.bz2
+
+# ==================== 备份文件 ====================
+# 备份文件
+*.bak
+*.backup
+*.old
+*.orig
+*.rej
+
+# 自动保存文件
+*.autosave
+*.swp
+*.swo
+
+# ==================== 文档和报告 ====================
+# Word文档临时文件
+~$*.docx
+*.docx.lock
+
+# PDF临时文件
+*.pdf.tmp
+
+# ==================== 特定于数学建模的文件 ====================
+# MATLAB文件（如果使用）
+*.mex*
+*.asv
+
+# LaTeX辅助文件
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.synctex.gz
+*.toc
+
+# ==================== 配置文件（可选） ====================
+# 包含敏感信息的配置文件
+config_local.yaml
+settings_local.py
+.env.local
+
+# ==================== 测试和调试 ====================
+# 测试输出
+test_output/
+debug/
+testing/
+
+# 性能分析文件
+*.prof
+*.profile
