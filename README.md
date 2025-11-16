@@ -1,4 +1,4 @@
-# 2025-CUMCM - 全国大学生数学建模竞赛解决方案
+# 2025-CUMCM - 全国大学生数学建模竞赛B题解决方案
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-3.7+-blue.svg)](https://www.python.org/)
@@ -7,7 +7,7 @@
 
 ## 📖 项目简介
 
-本项目是2025年全国大学生数学建模竞赛的完整解决方案，专注于**碳化硅外延层厚度的红外多光束干涉分析**。项目包含两个核心子模块：
+本项目是2025年全国大学生数学建模竞赛B题的完整解决方案，专注于**碳化硅外延层厚度的红外多光束干涉分析**。项目包含两个核心子模块：
 
 1. **Simulation** - 碳化硅外延层红外多光束干涉测量系统（Web应用）
 2. **模型代码** - 数学建模算法实现与数据分析
