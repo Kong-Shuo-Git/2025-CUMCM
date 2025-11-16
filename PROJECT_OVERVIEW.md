@@ -269,7 +269,7 @@ Simulation (Web应用实现)
 
 - **GitHub Issues**: [提交问题](https://github.com/Kong-Shuo/2025-CUMCM/issues)
 - **技术讨论**: [GitHub Discussions](https://github.com/Kong-Shuo/2025-CUMCM/discussions)
-- **邮箱联系**: [your-email@example.com]
+- **邮箱联系**: [kshuo4747@gmail.com]或[kongshuo2006@163.com]
 
 ---
 
